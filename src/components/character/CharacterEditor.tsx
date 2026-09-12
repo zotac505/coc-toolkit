@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import type { CharacterData, RuleEdition, SkillItem } from '../../types/character';
+import type { CharacterData, RuleEdition, SkillItem, AbilityScores } from '../../types/character';
 import { calculateDerivedStats, rollInitialAbilities } from '../../utils/characterCalc';
 import { copyCCfoliaDataToClipboard } from '../../utils/ccfolia';
 import { saveCharacterToGitHub } from '../../utils/githubSync';
@@ -19,7 +19,11 @@ import {
   Trash2,
   AlertCircle,
   Image as ImageIcon,
-  Camera
+  Camera,
+  HelpCircle,
+  Info,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 
 interface CharacterEditorProps {
@@ -28,6 +32,23 @@ interface CharacterEditorProps {
   onCancel: () => void;
 }
 
+const ABILITY_INFO: Record<keyof AbilityScores, {
+  name: string;
+  dice6th: string;
+  dice7th: string;
+  desc: string;
+  affects: string;
+}> = {
+  str: { name: '筋力', dice6th: '3D6', dice7th: '3D6×5', desc: '物理的な力強さ・筋力', affects: 'DB・近接戦闘' },
+  con: { name: '体力', dice6th: '3D6', dice7th: '3D6×5', desc: '健康状態・生命力・毒耐性', affects: 'HP・ショック耐性' },
+  pow: { name: '精神力', dice6th: '3D6', dice7th: '3D6×5', desc: '意志の強さ・魔力・精神安定', affects: 'SAN・MP・幸運(6版)' },
+  dex: { name: '敏捷性', dice6th: '3D6', dice7th: '3D6×5', desc: '身軽さ・反射神経・素早さ', affects: '回避・行動順' },
+  app: { name: '外見', dice6th: '3D6', dice7th: '3D6×5', desc: '魅力・好感度・容貌の良さ', affects: '対人関係' },
+  siz: { name: '体格', dice6th: '2D6+6', dice7th: '(2D6+6)×5', desc: '体の大きさ・身長・体重', affects: 'HP・DB・ビルド' },
+  int: { name: '知性', dice6th: '2D6+6', dice7th: '(2D6+6)×5', desc: '理解力・ひらめき・直感', affects: 'アイデア・興味技能P' },
+  edu: { name: '教育', dice6th: '3D6+3', dice7th: '(3D6+3)×5', desc: '学歴・教養・知識の深さ', affects: '職業技能P・知識・母国語' },
+};
+
 export const CharacterEditor: React.FC<CharacterEditorProps> = ({
   initialCharacter,
   onSave,
@@ -35,6 +56,7 @@ export const CharacterEditor: React.FC<CharacterEditorProps> = ({
 }) => {
   const [char, setChar] = useState<CharacterData>(initialCharacter);
   const [copied, setCopied] = useState(false);
+  const [showFormulaGuide, setShowFormulaGuide] = useState(false);
   const [activeSkillCategory, setActiveSkillCategory] = useState<string>('all');
   const [newSkillName, setNewSkillName] = useState('');
   const [newSkillInit, setNewSkillInit] = useState(1);
@@ -216,6 +238,17 @@ export const CharacterEditor: React.FC<CharacterEditorProps> = ({
     }));
   };
 
+  // 技能初期値の算出式ヒント
+  const getSkillInitFormula = (skillId: string, edition: RuleEdition) => {
+    if (skillId === 'dodge') {
+      return edition === '7th' ? 'DEX÷2' : 'DEX×2';
+    }
+    if (skillId === 'own_lang') {
+      return edition === '7th' ? 'EDU' : 'EDU×5';
+    }
+    return null;
+  };
+
   // ココフォリア用コピー
   const handleCopyCCfolia = async () => {
     const success = await copyCCfoliaDataToClipboard(char);
@@ -248,22 +281,25 @@ export const CharacterEditor: React.FC<CharacterEditorProps> = ({
               <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
             <div className="truncate">
-              <h2 className="text-base sm:text-xl font-bold text-slate-100 flex items-center gap-1.5 truncate">
-                <span className="truncate">{char.name || '新しい探索者'}</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-950 border border-emerald-500/30 text-emerald-400 shrink-0">
-                  {char.edition === '6th' ? '第6版' : '第7版'}
-                </span>
+              <h2 className="text-base sm:text-lg font-bold text-slate-100 truncate">
+                {char.name || '新規キャラクター'}
               </h2>
+              <p className="text-xs text-slate-400">
+                {char.edition === '7th' ? 'クトゥルフ神話TRPG 第7版' : 'クトゥルフ神話TRPG 第6版'}
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
-            {/* 6版/7版トグル */}
-            <div className="bg-slate-950 p-0.5 rounded-lg border border-slate-800 flex text-xs">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* 6版/7版 切り替えトグル */}
+            <div className="flex bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-xs">
               <button
+                type="button"
                 onClick={() => handleEditionChange('6th')}
-                className={`px-2 py-1 rounded font-medium transition ${
-                  char.edition === '6th' ? 'bg-emerald-600 text-white' : 'text-slate-400'
+                className={`px-2 py-1 rounded-md transition font-medium ${
+                  char.edition === '6th'
+                    ? 'bg-emerald-600 text-white'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 6版
@@ -417,100 +453,264 @@ export const CharacterEditor: React.FC<CharacterEditorProps> = ({
 
       {/* 能力値＆算出ステータス */}
       <div className="bg-slate-900/60 p-4 sm:p-5 rounded-xl border border-slate-800 space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-emerald-400">
-            能力値（Characteristic）
-          </h3>
-          <button
-            onClick={handleRollAllAbilities}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-900/40 hover:bg-emerald-800/60 text-emerald-300 border border-emerald-600/30 text-xs font-medium transition"
-          >
-            <Dices className="w-3.5 h-3.5" />
-            <span>一括ダイス</span>
-          </button>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-emerald-400">
+              能力値（Characteristic）
+            </h3>
+            <span className="text-[11px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+              {char.edition === '7th' ? '第7版 (新クトゥルフ)' : '第6版 (クラシック)'}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowFormulaGuide(!showFormulaGuide)}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition border ${
+                showFormulaGuide
+                  ? 'bg-cyan-950/60 text-cyan-300 border-cyan-700/60'
+                  : 'bg-slate-800/80 hover:bg-slate-800 text-slate-300 border-slate-700/50'
+              }`}
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-cyan-400" />
+              <span>{showFormulaGuide ? 'ガイドを閉じる' : '🔰 計算式の解説ガイド'}</span>
+              {showFormulaGuide ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            </button>
+
+            <button
+              onClick={handleRollAllAbilities}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-900/40 hover:bg-emerald-800/60 text-emerald-300 border border-emerald-600/30 text-xs font-medium transition"
+              title="全能力値をダイスで再計算"
+            >
+              <Dices className="w-3.5 h-3.5" />
+              <span>一括ダイス</span>
+            </button>
+          </div>
         </div>
 
-        {/* 能力値グリッド（スマホは4列2行で収まりが良い） */}
-        <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
-          {(['str', 'con', 'pow', 'dex', 'app', 'siz', 'int', 'edu'] as const).map(key => (
-            <div key={key} className="bg-slate-950 p-2 sm:p-2.5 rounded-lg border border-slate-800 text-center">
-              <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider block">
-                {key}
-              </span>
-              <input
-                type="number"
-                value={char.abilities[key]}
-                onChange={e => handleAbilityChange(key, parseInt(e.target.value, 10) || 0)}
-                className="w-full text-center text-lg sm:text-xl font-bold bg-transparent text-emerald-400 focus:outline-none mt-0.5"
-              />
-              {char.edition === '7th' && (
-                <div className="text-[9px] text-slate-500 hidden sm:block">
-                  ½:{Math.floor(char.abilities[key] / 2)}
+        {/* 初心者向け計算式早見表ガイド（トグル展開） */}
+        {showFormulaGuide && (
+          <div className="bg-slate-950/90 p-3.5 sm:p-4 rounded-xl border border-cyan-900/40 text-xs text-slate-300 space-y-3">
+            <div className="flex items-center gap-2 font-bold text-cyan-400 text-xs sm:text-sm border-b border-cyan-900/30 pb-1.5">
+              <Info className="w-4 h-4 text-cyan-400" />
+              <span>クトゥルフ神話TRPG ステータス計算の仕組み（{char.edition === '7th' ? '第7版' : '第6版'}）</span>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px] leading-relaxed">
+              <div className="space-y-1.5 bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/80">
+                <span className="font-bold text-emerald-400 block">🧠 なぜSAN値やMPが決まるの？</span>
+                <p>
+                  SAN値（正気度）やMP（魔力）は、精神的な強さを表す能力値<strong className="text-white">【POW】</strong>から算出されます。
+                </p>
+                <ul className="list-disc list-inside space-y-0.5 text-slate-400">
+                  {char.edition === '6th' ? (
+                    <>
+                      <li><span className="text-slate-200">SAN値:</span> <span className="text-purple-300 font-mono">POW × 5</span> （例: POW 10なら 50%）</li>
+                      <li><span className="text-slate-200">MP:</span> <span className="text-blue-300 font-mono">POW そのまま</span></li>
+                      <li><span className="text-slate-200">幸運:</span> <span className="text-emerald-300 font-mono">POW × 5</span></li>
+                    </>
+                  ) : (
+                    <>
+                      <li><span className="text-slate-200">SAN値:</span> <span className="text-purple-300 font-mono">POW と同値</span> （7版は能力値自体が％表記のため）</li>
+                      <li><span className="text-slate-200">MP:</span> <span className="text-blue-300 font-mono">POW ÷ 5</span></li>
+                      <li><span className="text-slate-200">幸運:</span> <span className="text-emerald-300 font-mono">3D6 × 5</span> （独立してダイスで決定）</li>
+                    </>
+                  )}
+                </ul>
+              </div>
+
+              <div className="space-y-1.5 bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/80">
+                <span className="font-bold text-emerald-400 block">❤️ 耐久度（HP）や攻撃力の決まり方</span>
+                <p>
+                  HPやダメージボーナス（DB）は、肉体の頑丈さ<strong className="text-white">【CON】</strong>や体の大きさ<strong className="text-white">【SIZ】</strong>から求めます。
+                </p>
+                <ul className="list-disc list-inside space-y-0.5 text-slate-400">
+                  {char.edition === '6th' ? (
+                    <>
+                      <li><span className="text-slate-200">HP:</span> <span className="text-red-300 font-mono">(CON + SIZ) ÷ 2</span>（端数切り上げ）</li>
+                      <li><span className="text-slate-200">DB:</span> <span className="text-amber-300 font-mono">STR + SIZ</span> の合計値テーブルで決定</li>
+                    </>
+                  ) : (
+                    <>
+                      <li><span className="text-slate-200">HP:</span> <span className="text-red-300 font-mono">(CON + SIZ) ÷ 10</span>（端数切り捨て）</li>
+                      <li><span className="text-slate-200">DB / ビルド:</span> <span className="text-amber-300 font-mono">STR + SIZ</span> の合計から算出</li>
+                    </>
+                  )}
+                  <li><span className="text-slate-200">回避の初期値:</span> {char.edition === '7th' ? <span className="text-cyan-300 font-mono">DEX ÷ 2</span> : <span className="text-cyan-300 font-mono">DEX × 2</span>}</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="bg-slate-900/40 p-2 rounded text-[11px] text-slate-400">
+              💡 <span className="text-slate-300 font-medium">技能ポイントの計算式:</span> 職業Pは【EDU（教育）】、趣味・興味Pは【INT（知性）】から自動計算されます。各ステータスカードの下部にも具体的な計算式を表記しています。
+            </div>
+          </div>
+        )}
+
+        {/* 能力値グリッド（日本語名・ダイス式・影響先を明記） */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2">
+          {(['str', 'con', 'pow', 'dex', 'app', 'siz', 'int', 'edu'] as const).map(key => {
+            const info = ABILITY_INFO[key];
+            const dice = char.edition === '7th' ? info.dice7th : info.dice6th;
+            return (
+              <div key={key} className="bg-slate-950 p-2 sm:p-2.5 rounded-lg border border-slate-800 text-center flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-center gap-1">
+                    <span className="text-xs font-black text-slate-200 uppercase tracking-wider">
+                      {key}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-normal">
+                      ({info.name})
+                    </span>
+                  </div>
+                  <span className="text-[9px] text-slate-500 font-mono block">
+                    {dice}
+                  </span>
                 </div>
-              )}
-            </div>
-          ))}
+
+                <div className="my-0.5">
+                  <input
+                    type="number"
+                    value={char.abilities[key]}
+                    onChange={e => handleAbilityChange(key, parseInt(e.target.value, 10) || 0)}
+                    className="w-full text-center text-lg sm:text-xl font-bold bg-transparent text-emerald-400 focus:outline-none focus:bg-slate-900 rounded"
+                  />
+                  {char.edition === '7th' && (
+                    <div className="text-[9px] text-slate-500 font-mono">
+                      ½:{Math.floor(char.abilities[key] / 2)} <span className="opacity-60">⅕:{Math.floor(char.abilities[key] / 5)}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="text-[9px] text-slate-400 bg-slate-900/80 px-1 py-0.5 rounded truncate" title={`${info.desc} → 影響: ${info.affects}`}>
+                  {info.affects}
+                </div>
+              </div>
+            );
+          })}
         </div>
 
-        {/* 算出ステータス（3列×2行でスマホでも綺麗に表示） */}
-        <div className="pt-2 border-t border-slate-800/80">
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center text-xs">
-            <div className="bg-slate-950 p-2 rounded-lg border border-slate-800">
-              <span className="text-slate-400 text-[10px] block">HP (耐久)</span>
-              <span className="text-sm sm:text-base font-bold text-red-400">{char.hp} / {char.maxHp}</span>
+        {/* 算出ステータス（計算根拠を明記） */}
+        <div className="pt-2 border-t border-slate-800/80 space-y-1.5">
+          <div className="flex items-center justify-between text-[11px] text-slate-400 px-1">
+            <span>算出ステータス（能力値から自動計算）</span>
+            <span className="text-[10px] text-slate-500">※各ボックス内に計算式を表示</span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-2 text-center text-xs">
+            {/* HP */}
+            <div className="bg-slate-950 p-2 rounded-lg border border-slate-800 flex flex-col justify-between">
+              <span className="text-slate-400 text-[10px] block font-medium">HP (耐久)</span>
+              <span className="text-sm sm:text-base font-bold text-red-400 my-0.5">{char.hp} / {char.maxHp}</span>
+              <span className="text-[9px] text-slate-400 font-mono bg-slate-900/90 py-0.5 rounded px-1 block truncate" title={`式: ${char.edition === '7th' ? '(CON+SIZ)÷10' : '(CON+SIZ)÷2'}`}>
+                {char.edition === '7th'
+                  ? `(${char.abilities.con}+${char.abilities.siz})÷10`
+                  : `(${char.abilities.con}+${char.abilities.siz})÷2`}
+              </span>
             </div>
-            <div className="bg-slate-950 p-2 rounded-lg border border-slate-800">
-              <span className="text-slate-400 text-[10px] block">MP (魔力)</span>
-              <span className="text-sm sm:text-base font-bold text-blue-400">{char.mp} / {char.maxMp}</span>
+
+            {/* MP */}
+            <div className="bg-slate-950 p-2 rounded-lg border border-slate-800 flex flex-col justify-between">
+              <span className="text-slate-400 text-[10px] block font-medium">MP (魔力)</span>
+              <span className="text-sm sm:text-base font-bold text-blue-400 my-0.5">{char.mp} / {char.maxMp}</span>
+              <span className="text-[9px] text-slate-400 font-mono bg-slate-900/90 py-0.5 rounded px-1 block truncate" title={char.edition === '7th' ? 'POW ÷ 5' : 'POWそのまま'}>
+                {char.edition === '7th' ? `POW(${char.abilities.pow})÷5` : `POW(${char.abilities.pow})`}
+              </span>
             </div>
-            <div className="bg-slate-950 p-2 rounded-lg border border-slate-800">
-              <span className="text-slate-400 text-[10px] block">SAN (正気度)</span>
-              <span className="text-sm sm:text-base font-bold text-purple-400">{char.san}</span>
+
+            {/* SAN */}
+            <div className="bg-slate-950 p-2 rounded-lg border border-purple-900/40 bg-purple-950/10 flex flex-col justify-between">
+              <span className="text-purple-300 text-[10px] block font-medium">SAN (正気度)</span>
+              <span className="text-sm sm:text-base font-bold text-purple-400 my-0.5">{char.san}</span>
+              <span className="text-[9px] text-purple-300 font-mono bg-purple-950/50 py-0.5 rounded px-1 block truncate" title={char.edition === '7th' ? '7版初期SAN = POW値' : `6版初期SAN = POW × 5 (${char.abilities.pow}×5)`}>
+                {char.edition === '7th' ? `POW値(${char.abilities.pow})` : `POW×5 (${char.abilities.pow}×5)`}
+              </span>
             </div>
-            <div className="bg-slate-950 p-2 rounded-lg border border-slate-800">
-              <span className="text-slate-400 text-[10px] block">DB</span>
-              <span className="text-sm sm:text-base font-bold text-amber-400">{char.damageBonus}</span>
+
+            {/* DB */}
+            <div className="bg-slate-950 p-2 rounded-lg border border-slate-800 flex flex-col justify-between">
+              <span className="text-slate-400 text-[10px] block font-medium">DB (威力補正)</span>
+              <span className="text-sm sm:text-base font-bold text-amber-400 my-0.5">{char.damageBonus}</span>
+              <span className="text-[9px] text-slate-400 font-mono bg-slate-900/90 py-0.5 rounded px-1 block truncate" title={`STR(${char.abilities.str}) + SIZ(${char.abilities.siz}) = ${char.abilities.str + char.abilities.siz}`}>
+                S+S={char.abilities.str + char.abilities.siz}
+              </span>
             </div>
-            <div className="bg-slate-950 p-2 rounded-lg border border-slate-800">
-              <span className="text-slate-400 text-[10px] block">幸運</span>
-              <span className="text-sm sm:text-base font-bold text-emerald-400">{char.luck}</span>
+
+            {/* 幸運 */}
+            <div className="bg-slate-950 p-2 rounded-lg border border-slate-800 flex flex-col justify-between">
+              <span className="text-slate-400 text-[10px] block font-medium">幸運</span>
+              <span className="text-sm sm:text-base font-bold text-emerald-400 my-0.5">{char.luck}</span>
+              <span className="text-[9px] text-slate-400 font-mono bg-slate-900/90 py-0.5 rounded px-1 block truncate" title={char.edition === '7th' ? '3D6 × 5 で独立決定' : `POW × 5 (${char.abilities.pow}×5)`}>
+                {char.edition === '7th' ? '3D6×5' : `POW×5 (${char.abilities.pow}×5)`}
+              </span>
             </div>
-            <div className="bg-slate-950 p-2 rounded-lg border border-slate-800">
-              <span className="text-slate-400 text-[10px] block">{char.edition === '7th' ? 'ビルド' : 'アイデア'}</span>
-              <span className="text-sm sm:text-base font-bold text-slate-300">
+
+            {/* アイデア / ビルド */}
+            <div className="bg-slate-950 p-2 rounded-lg border border-slate-800 flex flex-col justify-between">
+              <span className="text-slate-400 text-[10px] block font-medium">
+                {char.edition === '7th' ? 'ビルド' : 'アイデア'}
+              </span>
+              <span className="text-sm sm:text-base font-bold text-slate-300 my-0.5">
                 {char.edition === '7th' ? char.build : char.idea}
+              </span>
+              <span className="text-[9px] text-slate-400 font-mono bg-slate-900/90 py-0.5 rounded px-1 block truncate">
+                {char.edition === '7th' ? '体格規模' : `INT×5 (${char.abilities.int * 5})`}
+              </span>
+            </div>
+
+            {/* 知識 (6th) または 移動率 (7th) */}
+            <div className="bg-slate-950 p-2 rounded-lg border border-slate-800 flex flex-col justify-between col-span-2 sm:col-span-1">
+              <span className="text-slate-400 text-[10px] block font-medium">
+                {char.edition === '7th' ? '移動率 (MOV)' : '知識'}
+              </span>
+              <span className="text-sm sm:text-base font-bold text-slate-300 my-0.5">
+                {char.edition === '7th' ? char.moveRate : char.know}
+              </span>
+              <span className="text-[9px] text-slate-400 font-mono bg-slate-900/90 py-0.5 rounded px-1 block truncate">
+                {char.edition === '7th' ? 'DEX/STR/SIZ' : `EDU×5 (${char.abilities.edu * 5})`}
               </span>
             </div>
           </div>
         </div>
 
-        {/* 技能ポイントメーター */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-800/80">
-          <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-            <div className="flex justify-between text-xs text-slate-300 mb-1">
-              <span>職業技能P</span>
+        {/* 技能ポイントメーター（計算式と配分根拠を明記） */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-800/80">
+          <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1">
+            <div className="flex justify-between items-center text-xs">
+              <div className="flex items-center gap-1.5">
+                <span className="font-semibold text-slate-200">職業技能P</span>
+                <span className="text-[10px] text-slate-400 font-mono">
+                  ({char.edition === '7th' ? `EDU×4: ${char.abilities.edu}×4` : `EDU×20: ${char.abilities.edu}×20`} = {maxJobPoints}pt)
+                </span>
+              </div>
               <span className={remainingJobPoints < 0 ? 'text-red-400 font-bold' : 'text-emerald-400 font-medium'}>
                 残 {remainingJobPoints} / {maxJobPoints}
               </span>
             </div>
             <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
               <div
-                className={`h-full ${remainingJobPoints < 0 ? 'bg-red-500' : 'bg-emerald-500'}`}
+                className={`h-full transition-all duration-300 ${remainingJobPoints < 0 ? 'bg-red-500' : 'bg-emerald-500'}`}
                 style={{ width: `${Math.min(100, (usedJobPoints / (maxJobPoints || 1)) * 100)}%` }}
               />
             </div>
           </div>
 
-          <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-            <div className="flex justify-between text-xs text-slate-300 mb-1">
-              <span>趣味・興味技能P</span>
+          <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-1">
+            <div className="flex justify-between items-center text-xs">
+              <div className="flex items-center gap-1.5">
+                <span className="font-semibold text-slate-200">趣味・興味技能P</span>
+                <span className="text-[10px] text-slate-400 font-mono">
+                  ({char.edition === '7th' ? `INT×2: ${char.abilities.int}×2` : `INT×10: ${char.abilities.int}×10`} = {maxHobbyPoints}pt)
+                </span>
+              </div>
               <span className={remainingHobbyPoints < 0 ? 'text-red-400 font-bold' : 'text-cyan-400 font-medium'}>
                 残 {remainingHobbyPoints} / {maxHobbyPoints}
               </span>
             </div>
             <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
               <div
-                className={`h-full ${remainingHobbyPoints < 0 ? 'bg-red-500' : 'bg-cyan-500'}`}
+                className={`h-full transition-all duration-300 ${remainingHobbyPoints < 0 ? 'bg-red-500' : 'bg-cyan-500'}`}
                 style={{ width: `${Math.min(100, (usedHobbyPoints / (maxHobbyPoints || 1)) * 100)}%` }}
               />
             </div>
@@ -560,7 +760,14 @@ export const CharacterEditor: React.FC<CharacterEditorProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-xs text-slate-100">{skill.name}</span>
-                    <span className="text-[10px] text-slate-500">初期:{skill.initValue}%</span>
+                    <span className="text-[10px] text-slate-500">
+                      初期:{skill.initValue}%
+                      {getSkillInitFormula(skill.id, char.edition) && (
+                        <span className="ml-1 text-cyan-400 font-mono text-[9px]">
+                          ({getSkillInitFormula(skill.id, char.edition)})
+                        </span>
+                      )}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-emerald-400">{total}%</span>
@@ -661,7 +868,14 @@ export const CharacterEditor: React.FC<CharacterEditorProps> = ({
                         </button>
                       )}
                     </td>
-                    <td className="p-2 text-center text-slate-400">{skill.initValue}%</td>
+                    <td className="p-2 text-center text-slate-400">
+                      <span>{skill.initValue}%</span>
+                      {getSkillInitFormula(skill.id, char.edition) && (
+                        <span className="block text-[9px] text-cyan-400 font-mono">
+                          ({getSkillInitFormula(skill.id, char.edition)})
+                        </span>
+                      )}
+                    </td>
                     <td className="p-1.5 text-center">
                       <input
                         type="number"
