@@ -10,7 +10,12 @@ import { SyncSettingsModal } from './components/SyncSettingsModal';
 import type { CharacterData, RuleEdition } from './types/character';
 import type { ScenarioData } from './types/scenario';
 import { createNewCharacter } from './utils/characterCalc';
-import { fetchRepositoryData } from './utils/githubSync';
+import { 
+  fetchRepositoryData, 
+  deleteCharacterFromGitHub, 
+  deleteScenarioFromGitHub,
+  loadGitHubConfig 
+} from './utils/githubSync';
 import { 
   loadCharacters, 
   saveCharacter, 
@@ -83,9 +88,19 @@ export const App: React.FC = () => {
     setEditingCharacter(null);
   };
 
-  const handleDeleteCharacter = (id: string) => {
+  const handleDeleteCharacter = async (id: string) => {
+    const target = characters.find(c => c.id === id);
     deleteCharacter(id);
     setCharacters(loadCharacters());
+
+    // トークンが設定されていればリポジトリからも削除
+    const config = loadGitHubConfig();
+    if (config.token.trim()) {
+      const res = await deleteCharacterFromGitHub(id, target?.name);
+      if (!res.success) {
+        console.warn(res.message);
+      }
+    }
   };
 
   const handleCreateNewCharacter = (edition: RuleEdition) => {
@@ -118,10 +133,20 @@ export const App: React.FC = () => {
     setViewingScenario(scenario);
   };
 
-  const handleDeleteScenario = (id: string) => {
+  const handleDeleteScenario = async (id: string) => {
+    const target = scenarios.find(s => s.id === id);
     deleteScenario(id);
     setScenarios(loadScenarios());
     setViewingScenario(null);
+
+    // トークンが設定されていればリポジトリからも削除
+    const config = loadGitHubConfig();
+    if (config.token.trim()) {
+      const res = await deleteScenarioFromGitHub(id, target?.title);
+      if (!res.success) {
+        console.warn(res.message);
+      }
+    }
   };
 
   return (

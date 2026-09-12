@@ -215,7 +215,7 @@ export const CharacterList: React.FC<CharacterListProps> = ({
                   <button
                     onClick={e => {
                       e.stopPropagation();
-                      if (confirm(`「${char.name || '名称未設定'}」を削除しますか？`)) {
+                      if (confirm(`「${char.name || '名称未設定'}」を削除しますか？\n（リポジトリのまとめファイルからも削除同期されます）`)) {
                         onDeleteCharacter(char.id);
                       }
                     }}

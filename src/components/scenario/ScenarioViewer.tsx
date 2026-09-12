@@ -101,7 +101,7 @@ export const ScenarioViewer: React.FC<ScenarioViewerProps> = ({
             </button>
             <button
               onClick={() => {
-                if (confirm(`シナリオ「${scenario.title}」を削除しますか？`)) {
+                if (confirm(`シナリオ「${scenario.title}」を削除しますか？\n（リポジトリのまとめファイルからも削除同期されます）`)) {
                   onDelete(scenario.id);
                 }
               }}
