@@ -31,25 +31,28 @@ export const saveGitHubConfig = (config: GitHubConfig): void => {
   localStorage.setItem(GITHUB_CONFIG_KEY, JSON.stringify(config));
 };
 
-// Unicode安全なBase64エンコーダ/デコーダ
+// UTF-8対応の確実なBase64エンコード
 const toBase64 = (str: string): string => {
-  return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (_, p1) => {
-    return String.fromCharCode(parseInt(p1, 16));
-  }));
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
 };
 
+// Base64デコード
 const fromBase64 = (base64: string): string => {
-  const clean = base64.replace(/\n/g, '');
-  return decodeURIComponent(
-    Array.prototype.map
-      .call(atob(clean), (c: string) => {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      })
-      .join('')
-  );
+  const clean = base64.replace(/[\r\n\s]/g, '');
+  const binary = atob(clean);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new TextDecoder('utf-8').decode(bytes);
 };
 
-// --- GitHub API 経由でファイルを保存・追記 ---
 interface GitHubFileResponse {
   sha: string;
   content: string;
@@ -64,22 +67,32 @@ export const syncItemToGitHub = async <T extends { id: string }>(
   if (!config.token.trim()) {
     return {
       success: false,
-      message: 'GitHub APIトークンが設定されていません。画面上部の歯車アイコンからトークンを設定してください。',
+      message: 'GitHub APIトークンが未設定です。右上の「同期設定（歯車）」からトークンを入力してください。',
     };
   }
 
-  const url = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${filePath}?ref=${config.branch}`;
+  // キャッシュによるSHA不一致を防ぐためのキャッシュバスター
+  const timestamp = Date.now();
+  const getUrl = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${filePath}?ref=${config.branch}&_nocache=${timestamp}`;
+  const putUrl = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${filePath}`;
+
+  // トークンのBearer/token対応
+  const authHeader = config.token.startsWith('Bearer ') || config.token.startsWith('token ')
+    ? config.token
+    : `Bearer ${config.token}`;
 
   try {
-    // 1. 現在のファイル状態を取得
+    // 1. 最新のファイルSHAと内容を取得
     let sha: string | undefined = undefined;
     let currentList: T[] = [];
 
-    const getRes = await fetch(url, {
+    const getRes = await fetch(getUrl, {
       headers: {
-        Authorization: `token ${config.token}`,
-        Accept: 'application/vnd.github.v3+json',
+        Authorization: authHeader,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
       },
+      cache: 'no-store',
     });
 
     if (getRes.ok) {
@@ -89,21 +102,26 @@ export const syncItemToGitHub = async <T extends { id: string }>(
         const decoded = fromBase64(data.content);
         currentList = JSON.parse(decoded);
       } catch (err) {
-        console.warn('Existing content parse error, starting fresh array', err);
+        console.warn('Existing content parse error', err);
         currentList = [];
       }
     } else if (getRes.status === 404) {
-      // ファイル未作成時は空配列から開始
       currentList = [];
     } else {
       const errData = await getRes.json().catch(() => ({}));
+      let hint = '';
+      if (getRes.status === 401) {
+        hint = '（トークンが誤っているか、有効期限切れの可能性があります）';
+      } else if (getRes.status === 403) {
+        hint = '（トークンの権限に「repo」がチェックされているか確認してください）';
+      }
       return {
         success: false,
-        message: `GitHubファイルの取得に失敗しました (${getRes.status}): ${errData.message || ''}`,
+        message: `ファイルの取得に失敗しました [HTTP ${getRes.status}]: ${errData.message || ''} ${hint}`,
       };
     }
 
-    // 2. アイテムをマージ（同一IDがあれば更新、なければ先頭に追加）
+    // 2. アイテムをマージ
     const index = currentList.findIndex(existing => existing.id === item.id);
     if (index >= 0) {
       currentList[index] = item;
@@ -111,7 +129,7 @@ export const syncItemToGitHub = async <T extends { id: string }>(
       currentList.unshift(item);
     }
 
-    // 3. GitHubへPUTリクエスト（自動コミット）
+    // 3. PUTリクエストでコミット
     const updatedJsonString = JSON.stringify(currentList, null, 2);
     const contentBase64 = toBase64(updatedJsonString);
 
@@ -124,12 +142,13 @@ export const syncItemToGitHub = async <T extends { id: string }>(
       putBody.sha = sha;
     }
 
-    const putRes = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${filePath}`, {
+    const putRes = await fetch(putUrl, {
       method: 'PUT',
       headers: {
-        Authorization: `token ${config.token}`,
-        Accept: 'application/vnd.github.v3+json',
+        Authorization: authHeader,
+        Accept: 'application/vnd.github+json',
         'Content-Type': 'application/json',
+        'X-GitHub-Api-Version': '2022-11-28',
       },
       body: JSON.stringify(putBody),
     });
@@ -137,24 +156,32 @@ export const syncItemToGitHub = async <T extends { id: string }>(
     if (putRes.ok) {
       return {
         success: true,
-        message: 'リポジトリに保存（コミット）が完了しました！数分で全端末に同期されます。',
+        message: 'リポジトリへの保存（自動コミット）に成功しました！数分で全端末に同期されます。',
       };
     } else {
       const errData = await putRes.json().catch(() => ({}));
+      let hint = '';
+      if (putRes.status === 403) {
+        hint = '\n\n【原因の可能性】\nトークンに「repo（書き込み権限）」が付いていないか、Fine-grained TokenでRepository permissionsの「Contents: Read and write」が許可されていない可能性があります。';
+      } else if (putRes.status === 409) {
+        hint = '\n\n【原因の可能性】\nコミットの衝突が発生しました。もう一度「リポジトリ保存」を押してください。';
+      } else if (putRes.status === 401) {
+        hint = '\n\n【原因の可能性】\nトークンが無効です。';
+      }
+
       return {
         success: false,
-        message: `コミットの送信に失敗しました (${putRes.status}): ${errData.message || ''}`,
+        message: `コミットの送信に失敗しました [HTTP ${putRes.status}]: ${errData.message || '不明なエラー'}${hint}`,
       };
     }
   } catch (err: any) {
     return {
       success: false,
-      message: `通信エラーが発生しました: ${err.message || String(err)}`,
+      message: `通信エラー: ${err.message || String(err)}`,
     };
   }
 };
 
-// --- キャラクターの同期 ---
 export const saveCharacterToGitHub = async (character: CharacterData) => {
   return syncItemToGitHub(
     'public/data/characters.json',
@@ -163,7 +190,6 @@ export const saveCharacterToGitHub = async (character: CharacterData) => {
   );
 };
 
-// --- シナリオの同期 ---
 export const saveScenarioToGitHub = async (scenario: ScenarioData) => {
   return syncItemToGitHub(
     'public/data/scenarios.json',
@@ -172,13 +198,12 @@ export const saveScenarioToGitHub = async (scenario: ScenarioData) => {
   );
 };
 
-// --- リポジトリの最新データを取得（他端末での自動読み込み用） ---
 export const fetchRepositoryData = async () => {
   let remoteCharacters: CharacterData[] = [];
   let remoteScenarios: ScenarioData[] = [];
 
   try {
-    const charRes = await fetch('./data/characters.json?t=' + Date.now());
+    const charRes = await fetch('./data/characters.json?t=' + Date.now(), { cache: 'no-store' });
     if (charRes.ok) {
       remoteCharacters = await charRes.json();
     }
@@ -187,7 +212,7 @@ export const fetchRepositoryData = async () => {
   }
 
   try {
-    const scenRes = await fetch('./data/scenarios.json?t=' + Date.now());
+    const scenRes = await fetch('./data/scenarios.json?t=' + Date.now(), { cache: 'no-store' });
     if (scenRes.ok) {
       remoteScenarios = await scenRes.json();
     }
