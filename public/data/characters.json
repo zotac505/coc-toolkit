@@ -1,1 +1,581 @@
-[]
+[
+  {
+    "id": "char_1789212110651_wn03i",
+    "name": "",
+    "kana": "",
+    "edition": "6th",
+    "job": "",
+    "age": "",
+    "gender": "",
+    "origin": "",
+    "abilities": {
+      "str": 11,
+      "con": 12,
+      "pow": 9,
+      "dex": 7,
+      "app": 12,
+      "siz": 13,
+      "int": 14,
+      "edu": 13
+    },
+    "hp": 13,
+    "maxHp": 13,
+    "mp": 9,
+    "maxMp": 9,
+    "san": 45,
+    "maxSan": 99,
+    "initialSan": 45,
+    "idea": 70,
+    "luck": 45,
+    "know": 65,
+    "damageBonus": "0",
+    "build": 0,
+    "moveRate": 8,
+    "skills": [
+      {
+        "id": "spot_hidden",
+        "name": "目星",
+        "category": "search",
+        "initValue": 25,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "listen",
+        "name": "聞き耳",
+        "category": "search",
+        "initValue": 25,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "library_use",
+        "name": "図書館",
+        "category": "search",
+        "initValue": 25,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "first_aid",
+        "name": "応急手当",
+        "category": "search",
+        "initValue": 30,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "psychology",
+        "name": "心理学",
+        "category": "search",
+        "initValue": 5,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "track",
+        "name": "追跡",
+        "category": "search",
+        "initValue": 10,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "photo",
+        "name": "写真術",
+        "category": "search",
+        "initValue": 10,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "persuade",
+        "name": "説得",
+        "category": "negotiation",
+        "initValue": 15,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "fast_talk",
+        "name": "言いくるめ",
+        "category": "negotiation",
+        "initValue": 5,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "credit_rating",
+        "name": "信用",
+        "category": "negotiation",
+        "initValue": 15,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "bargain",
+        "name": "値引き",
+        "category": "negotiation",
+        "initValue": 5,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "6th"
+      },
+      {
+        "id": "charm",
+        "name": "魅惑",
+        "category": "negotiation",
+        "initValue": 15,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "7th"
+      },
+      {
+        "id": "intimidate",
+        "name": "威嚇",
+        "category": "negotiation",
+        "initValue": 15,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "7th"
+      },
+      {
+        "id": "dodge",
+        "name": "回避",
+        "category": "action",
+        "initValue": 14,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "sneak",
+        "name": "忍び歩き",
+        "category": "action",
+        "initValue": 10,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "6th"
+      },
+      {
+        "id": "hide",
+        "name": "隠れる",
+        "category": "action",
+        "initValue": 10,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "6th"
+      },
+      {
+        "id": "stealth",
+        "name": "隠密",
+        "category": "action",
+        "initValue": 20,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "7th"
+      },
+      {
+        "id": "drive_auto",
+        "name": "運転(自動車)",
+        "category": "action",
+        "initValue": 20,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "locksmith",
+        "name": "鍵開け",
+        "category": "action",
+        "initValue": 1,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "climb",
+        "name": "登攀",
+        "category": "action",
+        "initValue": 40,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "6th"
+      },
+      {
+        "id": "jump",
+        "name": "跳躍",
+        "category": "action",
+        "initValue": 25,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "swim",
+        "name": "水泳",
+        "category": "action",
+        "initValue": 25,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "disguise",
+        "name": "変装",
+        "category": "action",
+        "initValue": 1,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "sleight_of_hand",
+        "name": "手さばき",
+        "category": "action",
+        "initValue": 10,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "7th"
+      },
+      {
+        "id": "brawl",
+        "name": "こぶし/格闘",
+        "category": "combat",
+        "initValue": 50,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "kick",
+        "name": "キック",
+        "category": "combat",
+        "initValue": 25,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "6th"
+      },
+      {
+        "id": "grapple",
+        "name": "組み付き",
+        "category": "combat",
+        "initValue": 25,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "6th"
+      },
+      {
+        "id": "handgun",
+        "name": "拳銃",
+        "category": "combat",
+        "initValue": 20,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "shotgun",
+        "name": "ショットガン",
+        "category": "combat",
+        "initValue": 30,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "rifle",
+        "name": "ライフル",
+        "category": "combat",
+        "initValue": 25,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "martial_arts",
+        "name": "マーシャルアーツ",
+        "category": "combat",
+        "initValue": 1,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "6th"
+      },
+      {
+        "id": "medicine",
+        "name": "医学",
+        "category": "knowledge",
+        "initValue": 5,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "occult",
+        "name": "オカルト",
+        "category": "knowledge",
+        "initValue": 5,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "archaeology",
+        "name": "考古学",
+        "category": "knowledge",
+        "initValue": 1,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "history",
+        "name": "歴史",
+        "category": "knowledge",
+        "initValue": 20,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "psychoanalysis",
+        "name": "精神分析",
+        "category": "knowledge",
+        "initValue": 1,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "anthropology",
+        "name": "人類学",
+        "category": "knowledge",
+        "initValue": 1,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "biology",
+        "name": "生物学",
+        "category": "knowledge",
+        "initValue": 1,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "pharmacy",
+        "name": "薬学",
+        "category": "knowledge",
+        "initValue": 1,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "law",
+        "name": "法律",
+        "category": "knowledge",
+        "initValue": 5,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "cthulhu_mythos",
+        "name": "クトゥルフ神話",
+        "category": "knowledge",
+        "initValue": 0,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "science_chemistry",
+        "name": "化学",
+        "category": "knowledge",
+        "initValue": 1,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "science_physics",
+        "name": "物理学",
+        "category": "knowledge",
+        "initValue": 1,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "science_geology",
+        "name": "地質学",
+        "category": "knowledge",
+        "initValue": 1,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "natural_world",
+        "name": "自然",
+        "category": "knowledge",
+        "initValue": 10,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "7th"
+      },
+      {
+        "id": "nav",
+        "name": "ナビゲート",
+        "category": "search",
+        "initValue": 10,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "elec_repair",
+        "name": "電気修理",
+        "category": "knowledge",
+        "initValue": 10,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "mech_repair",
+        "name": "機械修理",
+        "category": "knowledge",
+        "initValue": 20,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "comp_use",
+        "name": "コンピューター",
+        "category": "knowledge",
+        "initValue": 1,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "electronics",
+        "name": "電子工学",
+        "category": "knowledge",
+        "initValue": 1,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "art_craft",
+        "name": "芸術/製作",
+        "category": "other",
+        "initValue": 5,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "other_lang",
+        "name": "他の言語(英語など)",
+        "category": "knowledge",
+        "initValue": 1,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      },
+      {
+        "id": "own_lang",
+        "name": "母国語(日本語)",
+        "category": "knowledge",
+        "initValue": 65,
+        "jobValue": 0,
+        "hobbyValue": 0,
+        "growthValue": 0,
+        "edition": "both"
+      }
+    ],
+    "jobPointsRemaining": 260,
+    "hobbyPointsRemaining": 140,
+    "backstory": {
+      "personalDescription": "",
+      "ideology": "",
+      "significantPeople": "",
+      "meaningfulLocations": "",
+      "treasuredPossessions": "",
+      "traits": "",
+      "injuriesScars": "",
+      "phobiasManias": ""
+    },
+    "memo": "",
+    "updatedAt": "2026-09-12T11:21:50.651Z"
+  }
+]
