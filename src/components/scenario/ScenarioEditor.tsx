@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import type { ScenarioData, ScenarioSection, HandoutItem } from '../../types/scenario';
+import { saveScenarioToGitHub } from '../../utils/githubSync';
 import { 
   ArrowLeft, 
   Save, 
   Plus, 
-  Trash2
+  Trash2,
+  CloudUpload
 } from 'lucide-react';
 
 interface ScenarioEditorProps {
@@ -73,6 +75,28 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
     setData(prev => ({ ...prev, sections: [...prev.sections, newSec] }));
   };
 
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleSyncToGitHub = async () => {
+    if (!data.title.trim()) {
+      alert('シナリオタイトルを入力してください');
+      return;
+    }
+    const updated = {
+      ...data,
+      recommendedSkills: skillsInput.split(',').map(s => s.trim()).filter(Boolean),
+      tags: tagsInput.split(',').map(t => t.trim()).filter(Boolean),
+      updatedAt: new Date().toISOString(),
+    };
+    setIsSyncing(true);
+    const res = await saveScenarioToGitHub(updated);
+    setIsSyncing(false);
+    alert(res.message);
+    if (res.success) {
+      onSave(updated);
+    }
+  };
+
   const handleSave = () => {
     if (!data.title.trim()) {
       alert('シナリオタイトルを入力してください');
@@ -106,13 +130,25 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
           </div>
         </div>
 
-        <button
-          onClick={handleSave}
-          className="flex items-center gap-1 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition shadow-sm shrink-0"
-        >
-          <Save className="w-3.5 h-3.5" />
-          <span>保存</span>
-        </button>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            onClick={handleSyncToGitHub}
+            disabled={isSyncing}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-purple-700 hover:bg-purple-600 text-white text-xs font-semibold transition shadow-sm disabled:opacity-50"
+            title="GitHubリポジトリに保存して他端末と共有"
+          >
+            <CloudUpload className="w-3.5 h-3.5" />
+            <span>{isSyncing ? '保存中...' : 'リポジトリ保存'}</span>
+          </button>
+
+          <button
+            onClick={handleSave}
+            className="flex items-center gap-1 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition shadow-sm"
+          >
+            <Save className="w-3.5 h-3.5" />
+            <span>保存</span>
+          </button>
+        </div>
       </div>
 
       {/* 基本情報フォーム */}

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import type { CharacterData, RuleEdition, SkillItem } from '../../types/character';
 import { calculateDerivedStats, rollInitialAbilities } from '../../utils/characterCalc';
 import { copyCCfoliaDataToClipboard } from '../../utils/ccfolia';
+import { saveCharacterToGitHub } from '../../utils/githubSync';
 import { BACKSTORY_TABLES, getRandomItem } from '../../data/backstoryGenerators';
 import { downloadJsonFile } from '../../utils/storage';
 import { 
@@ -15,7 +16,8 @@ import {
   RefreshCw, 
   Plus, 
   Trash2,
-  AlertCircle
+  AlertCircle,
+  CloudUpload
 } from 'lucide-react';
 
 interface CharacterEditorProps {
@@ -34,6 +36,19 @@ export const CharacterEditor: React.FC<CharacterEditorProps> = ({
   const [activeSkillCategory, setActiveSkillCategory] = useState<string>('all');
   const [newSkillName, setNewSkillName] = useState('');
   const [newSkillInit, setNewSkillInit] = useState(1);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<string | null>(null);
+
+  const handleSyncToGitHub = async () => {
+    setIsSyncing(true);
+    setSyncStatus(null);
+    const result = await saveCharacterToGitHub(char);
+    setIsSyncing(false);
+    alert(result.message);
+    if (result.success) {
+      onSave(char);
+    }
+  };
 
   // 6版/7版の切り替え
   const handleEditionChange = (newEdition: RuleEdition) => {
@@ -237,7 +252,18 @@ export const CharacterEditor: React.FC<CharacterEditorProps> = ({
               </button>
             </div>
 
-            {/* 保存ボタン */}
+            {/* リポジトリ保存（クラウド同期） */}
+            <button
+              onClick={handleSyncToGitHub}
+              disabled={isSyncing}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-purple-700 hover:bg-purple-600 text-white text-xs font-semibold transition shadow-md shadow-purple-950/40 disabled:opacity-50"
+              title="GitHubリポジトリのまとめファイルに追記して他端末へ共有"
+            >
+              <CloudUpload className="w-3.5 h-3.5" />
+              <span>{isSyncing ? '保存中...' : 'リポジトリ保存'}</span>
+            </button>
+
+            {/* ローカル保存ボタン */}
             <button
               onClick={() => onSave(char)}
               className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition shadow-md shadow-emerald-950/40"

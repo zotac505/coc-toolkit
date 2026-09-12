@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Navbar, TabType } from './components/Navbar';
+import { Navbar, type TabType } from './components/Navbar';
 import { CharacterList } from './components/character/CharacterList';
 import { CharacterEditor } from './components/character/CharacterEditor';
 import { ScenarioList } from './components/scenario/ScenarioList';
 import { ScenarioViewer } from './components/scenario/ScenarioViewer';
 import { ScenarioEditor } from './components/scenario/ScenarioEditor';
 import { KpToolsHub } from './components/tools/KpToolsHub';
-import { CharacterData, RuleEdition } from './types/character';
-import { ScenarioData } from './types/scenario';
+import { SyncSettingsModal } from './components/SyncSettingsModal';
+import type { CharacterData, RuleEdition } from './types/character';
+import type { ScenarioData } from './types/scenario';
 import { createNewCharacter } from './utils/characterCalc';
+import { fetchRepositoryData } from './utils/githubSync';
 import { 
   loadCharacters, 
   saveCharacter, 
@@ -20,6 +22,7 @@ import {
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<TabType>('characters');
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // キャラクター関連State
   const [characters, setCharacters] = useState<CharacterData[]>([]);
@@ -31,10 +34,46 @@ export const App: React.FC = () => {
   const [editingScenario, setEditingScenario] = useState<ScenarioData | null>(null);
   const [isCreatingScenario, setIsCreatingScenario] = useState(false);
 
-  // 初期ロード
+  // 初期ロード＆リポジトリデータの同期取得
   useEffect(() => {
-    setCharacters(loadCharacters());
-    setScenarios(loadScenarios());
+    // 1. ローカルデータを即時反映
+    const localChars = loadCharacters();
+    const localScens = loadScenarios();
+    setCharacters(localChars);
+    setScenarios(localScens);
+
+    // 2. リポジトリの最新まとめファイル（characters.json, scenarios.json）を取得してマージ
+    fetchRepositoryData().then(({ remoteCharacters, remoteScenarios }) => {
+      if (remoteCharacters.length > 0) {
+        // リモートキャラをLocalStorageにマージ
+        const mergedChars = [...localChars];
+        remoteCharacters.forEach(rc => {
+          const idx = mergedChars.findIndex(c => c.id === rc.id);
+          if (idx >= 0) {
+            mergedChars[idx] = rc;
+          } else {
+            mergedChars.push(rc);
+          }
+          saveCharacter(rc);
+        });
+        setCharacters(loadCharacters());
+      }
+
+      if (remoteScenarios.length > 0) {
+        // リモートシナリオをLocalStorageにマージ
+        const mergedScens = [...localScens];
+        remoteScenarios.forEach(rs => {
+          const idx = mergedScens.findIndex(s => s.id === rs.id);
+          if (idx >= 0) {
+            mergedScens[idx] = rs;
+          } else {
+            mergedScens.push(rs);
+          }
+          saveScenario(rs);
+        });
+        setScenarios(loadScenarios());
+      }
+    });
   }, []);
 
   // --- キャラクターハンドラ ---
@@ -87,13 +126,17 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      <Navbar currentTab={currentTab} onTabChange={(tab) => {
-        setCurrentTab(tab);
-        setEditingCharacter(null);
-        setViewingScenario(null);
-        setEditingScenario(null);
-        setIsCreatingScenario(false);
-      }} />
+      <Navbar
+        currentTab={currentTab}
+        onTabChange={(tab) => {
+          setCurrentTab(tab);
+          setEditingCharacter(null);
+          setViewingScenario(null);
+          setEditingScenario(null);
+          setIsCreatingScenario(false);
+        }}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+      />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 pb-24 md:pb-8">
         {/* キャラクター管理タブ */}
@@ -150,6 +193,12 @@ export const App: React.FC = () => {
         {/* KPツールタブ */}
         {currentTab === 'tools' && <KpToolsHub characters={characters} />}
       </main>
+
+      {/* GitHubクラウド同期設定モーダル */}
+      <SyncSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
 
       {/* フッター */}
       <footer className="border-t border-slate-900 bg-slate-950/80 py-6 text-center text-xs text-slate-500">

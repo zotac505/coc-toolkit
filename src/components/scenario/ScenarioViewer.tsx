@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { ScenarioData } from '../../types/scenario';
 import { downloadJsonFile } from '../../utils/storage';
+import { saveScenarioToGitHub } from '../../utils/githubSync';
 import { 
   ArrowLeft, 
   Eye, 
@@ -14,7 +15,8 @@ import {
   Lock,
   Unlock,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  CloudUpload
 } from 'lucide-react';
 
 interface ScenarioViewerProps {
@@ -73,6 +75,16 @@ export const ScenarioViewer: React.FC<ScenarioViewerProps> = ({
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={async () => {
+                const res = await saveScenarioToGitHub(scenario);
+                alert(res.message);
+              }}
+              className="p-1.5 sm:p-2 rounded-lg bg-purple-900/60 hover:bg-purple-800 text-purple-300 transition"
+              title="GitHubリポジトリへ保存（他端末と同期）"
+            >
+              <CloudUpload className="w-4 h-4" />
+            </button>
             <button
               onClick={() => downloadJsonFile(`${scenario.title}.json`, scenario)}
               className="p-1.5 sm:p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition"

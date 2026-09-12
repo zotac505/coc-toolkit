@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import type { CharacterData, RuleEdition } from '../../types/character';
 import { copyCCfoliaDataToClipboard } from '../../utils/ccfolia';
+import { saveCharacterToGitHub } from '../../utils/githubSync';
 import { downloadJsonFile } from '../../utils/storage';
 import { 
   Plus, 
@@ -12,7 +13,8 @@ import {
   FileText,
   Heart,
   Zap,
-  Brain
+  Brain,
+  CloudUpload
 } from 'lucide-react';
 
 interface CharacterListProps {
@@ -179,6 +181,17 @@ export const CharacterList: React.FC<CharacterListProps> = ({
                 </button>
 
                 <div className="flex items-center gap-1">
+                  <button
+                    onClick={async e => {
+                      e.stopPropagation();
+                      const res = await saveCharacterToGitHub(char);
+                      alert(res.message);
+                    }}
+                    className="p-1.5 rounded-md hover:bg-slate-800 text-purple-400 hover:text-purple-300 transition"
+                    title="GitHubリポジトリへ保存（他端末と同期）"
+                  >
+                    <CloudUpload className="w-4 h-4" />
+                  </button>
                   <button
                     onClick={e => {
                       e.stopPropagation();

@@ -1,14 +1,15 @@
 import React from 'react';
-import { Skull, BookOpen, Users, Wrench } from 'lucide-react';
+import { Skull, BookOpen, Users, Wrench, Settings } from 'lucide-react';
 
 export type TabType = 'characters' | 'scenarios' | 'tools';
 
 interface NavbarProps {
   currentTab: TabType;
   onTabChange: (tab: TabType) => void;
+  onOpenSettings: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ currentTab, onTabChange }) => {
+export const Navbar: React.FC<NavbarProps> = ({ currentTab, onTabChange, onOpenSettings }) => {
   return (
     <>
       {/* 上部ヘッダー（PC・スマホ共通） */}
@@ -73,16 +74,25 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onTabChange }) => {
               </button>
             </nav>
 
-            {/* GitHubリンク */}
-            <div className="flex items-center">
+            {/* 右側アクション（同期設定 & GitHubリンク） */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={onOpenSettings}
+                className="flex items-center gap-1 text-slate-400 hover:text-emerald-400 p-2 rounded-lg hover:bg-slate-800 transition text-xs"
+                title="GitHubクラウド同期設定"
+              >
+                <Settings className="w-4 h-4" />
+                <span className="hidden sm:inline">同期設定</span>
+              </button>
+
               <a
-                href="https://github.com"
+                href="https://github.com/zotac505/coc-toolkit"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-slate-400 hover:text-slate-200 p-2 rounded-lg hover:bg-slate-800 transition"
-                title="GitHubで公開する"
+                title="GitHubリポジトリ"
               >
-                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
                   <path
                     fillRule="evenodd"
                     clipRule="evenodd"
