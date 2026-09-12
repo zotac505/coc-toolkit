@@ -40,52 +40,6 @@
 
 ---
 
-## 🚀 GitHub Pages で公開する手順
-
-本アプリは静的Webサイト（SPA）としてビルドされるため、GitHub Pagesで誰でも簡単に公開できます。
-
-### ステップ 1: GitHubで新しいリポジトリを作成
-1. [GitHub](https://github.com/) にログインし、右上の「+」→ **「New repository」** を選択。
-2. リポジトリ名（例: `coc-toolkit` など）を入力し、**Public** を選択して作成。
-
-### ステップ 2: コードをGitHubへプッシュ
-ターミナルまたはPowerShellで、このフォルダ（`coc-toolkit`）に移動して以下のコマンドを実行します：
-
-```bash
-git init
-git add .
-git commit -m "feat: 初期バージョン公開"
-git branch -M main
-git remote add origin https://github.com/あなたのユーザー名/あなたのリポジトリ名.git
-git push -u origin main
-```
-
-### ステップ 3: GitHub Pagesの設定を有効化
-1. 作成したGitHubリポジトリのページを開き、**「Settings」** タブをクリック。
-2. 左メニューの **「Pages」** をクリック。
-3. **「Build and deployment」** の **「Source」** を **「GitHub Actions」** に変更。
-4. 数分待つと、リポジトリに含まれる `.github/workflows/deploy.yml` が自動実行され、公開URL（`https://あなたのユーザー名.github.io/あなたのリポジトリ名/`）が発行されます！
-
----
-
-## 💻 ローカルでの起動方法（開発・テスト用）
-
-```bash
-# 依存パッケージのインストール
-npm install
-
-# 開発サーバー起動（ブラウザで http://localhost:5173 を開く）
-npm run dev
-
-# プロダクションビルド
-npm run build
-
-# ビルド成果物のプレビュー
-npm run preview
-```
-
----
-
 ## 📜 ライセンス・権利表記
 
 本作は、「株式会社アークライト」及び「株式会社KADOKAWA」が権利を有する『クトゥルフ神話TRPG』の二次創作・プレイ支援ツールです。
