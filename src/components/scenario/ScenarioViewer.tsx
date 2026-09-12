@@ -76,16 +76,6 @@ export const ScenarioViewer: React.FC<ScenarioViewerProps> = ({
 
           <div className="flex items-center gap-1.5 shrink-0">
             <button
-              onClick={async () => {
-                const res = await saveScenarioToGitHub(scenario);
-                alert(res.message);
-              }}
-              className="p-1.5 sm:p-2 rounded-lg bg-purple-900/60 hover:bg-purple-800 text-purple-300 transition"
-              title="GitHubリポジトリへ保存（他端末と同期）"
-            >
-              <CloudUpload className="w-4 h-4" />
-            </button>
-            <button
               onClick={() => downloadJsonFile(`${scenario.title}.json`, scenario)}
               className="p-1.5 sm:p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
               title="JSON保存"

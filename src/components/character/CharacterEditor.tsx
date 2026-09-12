@@ -3,6 +3,7 @@ import type { CharacterData, RuleEdition, SkillItem } from '../../types/characte
 import { calculateDerivedStats, rollInitialAbilities } from '../../utils/characterCalc';
 import { copyCCfoliaDataToClipboard } from '../../utils/ccfolia';
 import { saveCharacterToGitHub } from '../../utils/githubSync';
+import { processImageFile } from '../../utils/imageUtils';
 import { BACKSTORY_TABLES, getRandomItem } from '../../data/backstoryGenerators';
 import { downloadJsonFile } from '../../utils/storage';
 import { 
@@ -17,7 +18,8 @@ import {
   Plus, 
   Trash2,
   AlertCircle,
-  CloudUpload
+  Image as ImageIcon,
+  Camera
 } from 'lucide-react';
 
 interface CharacterEditorProps {
@@ -37,12 +39,36 @@ export const CharacterEditor: React.FC<CharacterEditorProps> = ({
   const [newSkillName, setNewSkillName] = useState('');
   const [newSkillInit, setNewSkillInit] = useState(1);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [syncStatus, setSyncStatus] = useState<string | null>(null);
 
-  const handleSyncToGitHub = async () => {
+  // 立ち絵画像State
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | undefined>(char.imageUrl);
+  const [pendingImageBase64, setPendingImageBase64] = useState<string | undefined>(undefined);
+
+  // 画像選択ハンドラ
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const processed = await processImageFile(file, 800);
+      setPreviewImageUrl(processed.dataUrl);
+      setPendingImageBase64(processed.base64);
+    } catch (err) {
+      alert('画像の読み込みに失敗しました');
+    }
+  };
+
+  // 画像削除ハンドラ
+  const handleRemoveImage = () => {
+    setPreviewImageUrl(undefined);
+    setPendingImageBase64(undefined);
+    setChar(prev => ({ ...prev, imageUrl: undefined }));
+  };
+
+  // 一本化した保存ハンドラ（ローカル＋リポジトリ自動コミット）
+  const handleSave = async () => {
     setIsSyncing(true);
-    setSyncStatus(null);
-    const result = await saveCharacterToGitHub(char);
+    const result = await saveCharacterToGitHub(char, pendingImageBase64);
     setIsSyncing(false);
     alert(result.message);
     if (result.success) {
@@ -252,24 +278,14 @@ export const CharacterEditor: React.FC<CharacterEditorProps> = ({
               </button>
             </div>
 
-            {/* リポジトリ保存（クラウド同期） */}
+            {/* 保存ボタン（ローカル保存 ＋ リポジトリ自動アップロード） */}
             <button
-              onClick={handleSyncToGitHub}
+              onClick={handleSave}
               disabled={isSyncing}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-purple-700 hover:bg-purple-600 text-white text-xs font-semibold transition shadow-md shadow-purple-950/40 disabled:opacity-50"
-              title="GitHubリポジトリのまとめファイルに追記して他端末へ共有"
-            >
-              <CloudUpload className="w-3.5 h-3.5" />
-              <span>{isSyncing ? '保存中...' : 'リポジトリ保存'}</span>
-            </button>
-
-            {/* ローカル保存ボタン */}
-            <button
-              onClick={() => onSave(char)}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition shadow-md shadow-emerald-950/40"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition shadow-md shadow-emerald-950/40 disabled:opacity-50"
             >
               <Save className="w-3.5 h-3.5" />
-              <span>保存</span>
+              <span>{isSyncing ? 'アップロード中...' : '保存'}</span>
             </button>
           </div>
         </div>
@@ -294,62 +310,106 @@ export const CharacterEditor: React.FC<CharacterEditorProps> = ({
         </div>
       </div>
 
-      {/* 基本情報フォーム */}
+      {/* 基本情報フォーム（立ち絵アップロード対応） */}
       <div className="bg-slate-900/60 p-4 sm:p-5 rounded-xl border border-slate-800 space-y-3">
         <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-emerald-400">
-          基本情報
+          基本情報 ＆ 立ち絵
         </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="col-span-2 sm:col-span-1">
-            <label className="block text-[11px] text-slate-400 mb-1">探索者名</label>
-            <input
-              type="text"
-              value={char.name}
-              onChange={e => setChar({ ...char, name: e.target.value })}
-              placeholder="例: 佐藤 健一"
-              className="w-full px-2.5 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-100 text-sm focus:outline-none focus:border-emerald-500"
-            />
+
+        <div className="flex flex-col sm:flex-row gap-4">
+          {/* 立ち絵プレビュー＆アップロード枠 */}
+          <div className="flex sm:flex-col items-center gap-3 shrink-0">
+            <label className="relative group w-24 h-28 sm:w-28 sm:h-36 rounded-xl bg-slate-950 border-2 border-dashed border-slate-800 hover:border-emerald-500/60 flex flex-col items-center justify-center cursor-pointer overflow-hidden transition shadow-inner">
+              {previewImageUrl ? (
+                <>
+                  <img
+                    src={previewImageUrl}
+                    alt="立ち絵プレビュー"
+                    className="w-full h-full object-cover group-hover:opacity-75 transition"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition text-slate-200 text-[10px]">
+                    変更する
+                  </div>
+                </>
+              ) : (
+                <div className="text-center p-2 space-y-1 text-slate-500 group-hover:text-emerald-400 transition">
+                  <Camera className="w-6 h-6 mx-auto" />
+                  <span className="text-[10px] block font-medium">立ち絵登録</span>
+                </div>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+              />
+            </label>
+
+            {previewImageUrl && (
+              <button
+                type="button"
+                onClick={handleRemoveImage}
+                className="text-[10px] text-red-400 hover:text-red-300 py-0.5 px-2 rounded bg-red-950/40 border border-red-900/40 transition flex items-center gap-1"
+              >
+                <Trash2 className="w-3 h-3" />
+                <span>立ち絵削除</span>
+              </button>
+            )}
           </div>
-          <div className="col-span-2 sm:col-span-1">
-            <label className="block text-[11px] text-slate-400 mb-1">ふりがな</label>
-            <input
-              type="text"
-              value={char.kana}
-              onChange={e => setChar({ ...char, kana: e.target.value })}
-              placeholder="例: さとう けんいち"
-              className="w-full px-2.5 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-100 text-sm focus:outline-none focus:border-emerald-500"
-            />
-          </div>
-          <div className="col-span-2 sm:col-span-1">
-            <label className="block text-[11px] text-slate-400 mb-1">職業</label>
-            <input
-              type="text"
-              value={char.job}
-              onChange={e => setChar({ ...char, job: e.target.value })}
-              placeholder="例: 私立探偵 / 教授"
-              className="w-full px-2.5 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-100 text-sm focus:outline-none focus:border-emerald-500"
-            />
-          </div>
-          <div className="col-span-2 sm:col-span-1 grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-[11px] text-slate-400 mb-1">年齢</label>
+
+          {/* テキスト入力欄 */}
+          <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="col-span-2 sm:col-span-1">
+              <label className="block text-[11px] text-slate-400 mb-1">探索者名</label>
               <input
                 type="text"
-                value={char.age}
-                onChange={e => setChar({ ...char, age: e.target.value })}
-                placeholder="28"
-                className="w-full px-2 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-100 text-sm text-center focus:outline-none focus:border-emerald-500"
+                value={char.name}
+                onChange={e => setChar({ ...char, name: e.target.value })}
+                placeholder="例: 佐藤 健一"
+                className="w-full px-2.5 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-100 text-sm focus:outline-none focus:border-emerald-500"
               />
             </div>
-            <div>
-              <label className="block text-[11px] text-slate-400 mb-1">性別</label>
+            <div className="col-span-2 sm:col-span-1">
+              <label className="block text-[11px] text-slate-400 mb-1">ふりがな</label>
               <input
                 type="text"
-                value={char.gender}
-                onChange={e => setChar({ ...char, gender: e.target.value })}
-                placeholder="男"
-                className="w-full px-2 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-100 text-sm text-center focus:outline-none focus:border-emerald-500"
+                value={char.kana}
+                onChange={e => setChar({ ...char, kana: e.target.value })}
+                placeholder="例: さとう けんいち"
+                className="w-full px-2.5 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-100 text-sm focus:outline-none focus:border-emerald-500"
               />
+            </div>
+            <div className="col-span-2 sm:col-span-1">
+              <label className="block text-[11px] text-slate-400 mb-1">職業</label>
+              <input
+                type="text"
+                value={char.job}
+                onChange={e => setChar({ ...char, job: e.target.value })}
+                placeholder="例: 私立探偵 / 教授"
+                className="w-full px-2.5 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-100 text-sm focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+            <div className="col-span-2 sm:col-span-1 grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-[11px] text-slate-400 mb-1">年齢</label>
+                <input
+                  type="text"
+                  value={char.age}
+                  onChange={e => setChar({ ...char, age: e.target.value })}
+                  placeholder="28"
+                  className="w-full px-2 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-100 text-sm text-center focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] text-slate-400 mb-1">性別</label>
+                <input
+                  type="text"
+                  value={char.gender}
+                  onChange={e => setChar({ ...char, gender: e.target.value })}
+                  placeholder="男"
+                  className="w-full px-2 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-100 text-sm text-center focus:outline-none focus:border-emerald-500"
+                />
+              </div>
             </div>
           </div>
         </div>

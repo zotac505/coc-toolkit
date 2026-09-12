@@ -291,7 +291,89 @@ export const removeItemFromGitHub = async <T extends { id: string }>(
   }
 };
 
-export const saveCharacterToGitHub = async (character: CharacterData) => {
+// --- バイナリ/画像ファイルのGitHubへのアップロード ---
+export const uploadBinaryFileToGitHub = async (
+  filePath: string,
+  base64Content: string,
+  commitMessage: string
+): Promise<{ success: boolean; message: string }> => {
+  const config = loadGitHubConfig();
+  if (!config.token.trim()) {
+    return { success: false, message: 'GitHub APIトークンが未設定です。' };
+  }
+
+  const timestamp = Date.now();
+  const getUrl = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${filePath}?ref=${config.branch}&_nocache=${timestamp}`;
+  const putUrl = `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${filePath}`;
+
+  const authHeader = config.token.startsWith('Bearer ') || config.token.startsWith('token ')
+    ? config.token
+    : `Bearer ${config.token}`;
+
+  try {
+    let sha: string | undefined = undefined;
+    const getRes = await fetch(getUrl, {
+      headers: {
+        Authorization: authHeader,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+      cache: 'no-store',
+    });
+
+    if (getRes.ok) {
+      const data: GitHubFileResponse = await getRes.json();
+      sha = data.sha;
+    }
+
+    const putBody: any = {
+      message: commitMessage,
+      content: base64Content,
+      branch: config.branch,
+    };
+    if (sha) {
+      putBody.sha = sha;
+    }
+
+    const putRes = await fetch(putUrl, {
+      method: 'PUT',
+      headers: {
+        Authorization: authHeader,
+        Accept: 'application/vnd.github+json',
+        'Content-Type': 'application/json',
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+      body: JSON.stringify(putBody),
+    });
+
+    if (putRes.ok) {
+      return { success: true, message: '画像アップロード成功' };
+    } else {
+      const errData = await putRes.json().catch(() => ({}));
+      return { success: false, message: `画像の保存に失敗しました: ${errData.message || ''}` };
+    }
+  } catch (err: any) {
+    return { success: false, message: err.message || String(err) };
+  }
+};
+
+export const saveCharacterToGitHub = async (character: CharacterData, imageBase64?: string) => {
+  // 1. もし新しい立ち絵画像があれば public/uploads/ にコミット
+  if (imageBase64) {
+    const imgPath = `public/uploads/char_${character.id}.png`;
+    const uploadRes = await uploadBinaryFileToGitHub(
+      imgPath,
+      imageBase64,
+      `feat(image): 立ち絵追加: ${character.name || '探索者'}`
+    );
+    if (uploadRes.success) {
+      character.imageUrl = `./uploads/char_${character.id}.png`;
+    } else {
+      console.warn('Image upload failed, proceeding with json save', uploadRes.message);
+    }
+  }
+
+  // 2. characters.json に探索者データを追記コミット
   return syncItemToGitHub(
     'public/data/characters.json',
     character,

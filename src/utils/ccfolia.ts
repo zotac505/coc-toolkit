@@ -7,6 +7,7 @@ export interface CCfoliaClipboardData {
     memo: string;
     initiative: number;
     externalUrl?: string;
+    iconUrl?: string;
     status: Array<{
       label: string;
       value: number;
@@ -70,6 +71,11 @@ export const generateCCfoliaData = (char: CharacterData): CCfoliaClipboardData =
         char.memo ? `\n【メモ】\n${char.memo}` : ''
       ].filter(Boolean).join('\n'),
       initiative: char.abilities.dex || 10,
+      iconUrl: char.imageUrl
+        ? char.imageUrl.startsWith('http')
+          ? char.imageUrl
+          : `https://zotac505.github.io/coc-toolkit/${char.imageUrl.replace(/^\.\//, '')}`
+        : undefined,
       status: [
         { label: 'HP', value: char.hp, max: char.maxHp },
         { label: 'MP', value: char.mp, max: char.maxMp },

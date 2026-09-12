@@ -77,17 +77,20 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
 
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const handleSyncToGitHub = async () => {
+  // 一本化した保存ハンドラ（ローカル＋リポジトリ自動アップロード）
+  const handleSave = async () => {
     if (!data.title.trim()) {
       alert('シナリオタイトルを入力してください');
       return;
     }
+
     const updated = {
       ...data,
       recommendedSkills: skillsInput.split(',').map(s => s.trim()).filter(Boolean),
       tags: tagsInput.split(',').map(t => t.trim()).filter(Boolean),
       updatedAt: new Date().toISOString(),
     };
+
     setIsSyncing(true);
     const res = await saveScenarioToGitHub(updated);
     setIsSyncing(false);
@@ -95,21 +98,6 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
     if (res.success) {
       onSave(updated);
     }
-  };
-
-  const handleSave = () => {
-    if (!data.title.trim()) {
-      alert('シナリオタイトルを入力してください');
-      return;
-    }
-
-    const updated = {
-      ...data,
-      recommendedSkills: skillsInput.split(',').map(s => s.trim()).filter(Boolean),
-      tags: tagsInput.split(',').map(t => t.trim()).filter(Boolean),
-      updatedAt: new Date().toISOString(),
-    };
-    onSave(updated);
   };
 
   return (
@@ -132,21 +120,12 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
 
         <div className="flex items-center gap-1.5 shrink-0">
           <button
-            onClick={handleSyncToGitHub}
-            disabled={isSyncing}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-purple-700 hover:bg-purple-600 text-white text-xs font-semibold transition shadow-sm disabled:opacity-50"
-            title="GitHubリポジトリに保存して他端末と共有"
-          >
-            <CloudUpload className="w-3.5 h-3.5" />
-            <span>{isSyncing ? '保存中...' : 'リポジトリ保存'}</span>
-          </button>
-
-          <button
             onClick={handleSave}
-            className="flex items-center gap-1 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition shadow-sm"
+            disabled={isSyncing}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition shadow-sm disabled:opacity-50"
           >
             <Save className="w-3.5 h-3.5" />
-            <span>保存</span>
+            <span>{isSyncing ? 'アップロード中...' : '保存'}</span>
           </button>
         </div>
       </div>

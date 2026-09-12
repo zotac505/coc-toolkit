@@ -132,8 +132,21 @@ export const CharacterList: React.FC<CharacterListProps> = ({
               className="bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-emerald-500/40 rounded-xl p-3.5 sm:p-4 transition cursor-pointer flex flex-col justify-between shadow-sm"
             >
               <div className="space-y-2.5">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
+                <div className="flex items-start gap-2.5">
+                  {/* 立ち絵サムネイル */}
+                  {char.imageUrl ? (
+                    <img
+                      src={char.imageUrl}
+                      alt={char.name}
+                      className="w-12 h-14 rounded-lg object-cover bg-slate-950 border border-slate-800 shrink-0"
+                    />
+                  ) : (
+                    <div className="w-12 h-14 rounded-lg bg-slate-950 border border-slate-800/80 flex items-center justify-center text-slate-600 shrink-0">
+                      <FileText className="w-6 h-6" />
+                    </div>
+                  )}
+
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
                       <h3 className="font-bold text-sm sm:text-base text-slate-100 truncate">
                         {char.name || '名称未設定'}
@@ -181,17 +194,6 @@ export const CharacterList: React.FC<CharacterListProps> = ({
                 </button>
 
                 <div className="flex items-center gap-1">
-                  <button
-                    onClick={async e => {
-                      e.stopPropagation();
-                      const res = await saveCharacterToGitHub(char);
-                      alert(res.message);
-                    }}
-                    className="p-1.5 rounded-md hover:bg-slate-800 text-purple-400 hover:text-purple-300 transition"
-                    title="GitHubリポジトリへ保存（他端末と同期）"
-                  >
-                    <CloudUpload className="w-4 h-4" />
-                  </button>
                   <button
                     onClick={e => {
                       e.stopPropagation();

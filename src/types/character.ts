@@ -51,6 +51,7 @@ export interface CharacterData {
   jobPointsRemaining: number;
   hobbyPointsRemaining: number;
   // プロフィール
+  imageUrl?: string; // 立ち絵・アイコン画像URL
   backstory: {
     personalDescription: string; // 容姿・特徴
     ideology: string; // 信念
