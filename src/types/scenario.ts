@@ -28,6 +28,7 @@ export interface ScenarioData {
   catchphrase: string;
   summary: string;
   truth: string; // 真相（KP向けネタバレ）
+  sourceUrl?: string; // 原本・公式配布元URL
   handouts: HandoutItem[];
   sections: ScenarioSection[];
   createdAt: string;

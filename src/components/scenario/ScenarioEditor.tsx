@@ -170,6 +170,17 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({
             />
           </div>
 
+          <div className="sm:col-span-2">
+            <label className="block text-[11px] text-slate-400 mb-1">参照元URL / 原本リンク（BOOTH・ブログ等）</label>
+            <input
+              type="url"
+              value={data.sourceUrl || ''}
+              onChange={e => setData({ ...data, sourceUrl: e.target.value })}
+              placeholder="https://booth.pm/... または https://..."
+              className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-100 text-sm focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+
           <div className="grid grid-cols-3 gap-2 sm:col-span-2">
             <div>
               <label className="block text-[11px] text-slate-400 mb-1">推奨人数</label>

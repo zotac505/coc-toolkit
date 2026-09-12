@@ -16,7 +16,8 @@ import {
   Unlock,
   ChevronDown,
   ChevronUp,
-  CloudUpload
+  CloudUpload,
+  ExternalLink
 } from 'lucide-react';
 
 interface ScenarioViewerProps {
@@ -121,11 +122,26 @@ export const ScenarioViewer: React.FC<ScenarioViewerProps> = ({
 
       {/* 概要カード */}
       <div className="bg-slate-900/60 p-4 sm:p-6 rounded-xl border border-slate-800 space-y-3">
-        {scenario.catchphrase && (
-          <p className="text-xs sm:text-sm font-semibold italic text-emerald-400">
-            {scenario.catchphrase}
-          </p>
-        )}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          {scenario.catchphrase ? (
+            <p className="text-xs sm:text-sm font-semibold italic text-emerald-400">
+              {scenario.catchphrase}
+            </p>
+          ) : <div />}
+
+          {scenario.sourceUrl && (
+            <a
+              href={scenario.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-950/60 hover:bg-cyan-900/60 text-cyan-300 border border-cyan-700/50 text-xs font-medium transition shrink-0 self-start sm:self-auto shadow-sm"
+              title="参照元の原文・公式配布ページを開く"
+            >
+              <ExternalLink className="w-3.5 h-3.5 text-cyan-400" />
+              <span>参照元の原文 / 公式ページを開く</span>
+            </a>
+          )}
+        </div>
 
         <p className="text-xs sm:text-sm text-slate-200 leading-relaxed whitespace-pre-wrap">
           {scenario.summary}
